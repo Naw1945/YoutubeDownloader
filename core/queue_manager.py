@@ -13,7 +13,7 @@ class QueueManager:
         if self.on_task_added:
             self.on_task_added(task)
 
-        # Khởi chạy luồng download ngay khi add
+
         thread = threading.Thread(target=task.run, daemon=True)
         thread.start()
 

@@ -46,15 +46,12 @@ class DownloaderTask:
                 self.on_progress(self.progress)
 
     def run(self):
-        # ─── ĐƯỜNG DẪN DYNAMIC TRONG PROJECT ──────────────────────────────────
         current_file_path = os.path.abspath(__file__)
         core_dir = os.path.dirname(current_file_path)
         project_root = os.path.dirname(core_dir)
         ffmpeg_path = os.path.join(project_root, 'ffmpeg_bin')
 
         print(f"[Debug] Thư mục chứa FFmpeg & Node được cấu hình là: {ffmpeg_path}")
-
-        # ÉP HỆ THỐNG NỘI BỘ NHẬN THƯ MỤC NÀY LÀ PATH (SỬA LỖI JS RUNTIME)
         os.environ["PATH"] = ffmpeg_path + os.path.pathsep + os.environ.get("PATH", "")
         # ──────────────────────────────────────────────────────────────────────
 
@@ -65,8 +62,6 @@ class DownloaderTask:
             'noprogress': True,
             'no_warnings': True,
             'ffmpeg_location': ffmpeg_path,
-
-            # Giữ nguyên cấu hình bọc giáp chống chặn cũ bên dưới...
             'retries': 10,
             'fragment_retries': 10,
             'extractor_retries': 5,
@@ -79,7 +74,6 @@ class DownloaderTask:
             }
         }
 
-        # ─── XỬ LÝ ĐỊNH DẠNG TẢI THEO YÊU CẦU ─────────────────────────────────
         if self.format_type == "MP3":
             opts['format'] = 'bestaudio/best'
             opts['postprocessors'] = [{
@@ -95,7 +89,6 @@ class DownloaderTask:
                 res = self.quality.replace('p', '')
                 opts['format'] = f'bestvideo[ext=mp4][height<={res}]+bestaudio[ext=m4a]/best[ext=mp4]/best'
 
-        # ─── KÍCH HOẠT TIẾN TRÌNH TẢI ─────────────────────────────────────────
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
                 ydl.download([self.url])

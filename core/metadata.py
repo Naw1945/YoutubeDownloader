@@ -7,9 +7,8 @@ def fetch_metadata(url: str) -> Optional[Dict[str, Any]]:
     ydl_opts = {
         'quiet': True,
         'extract_flat': 'in_playlist',
-        'no_warnings': True,  # Ẩn các warning rác về JS
+        'no_warnings': True,  #
 
-        # Thêm cấu hình bọc giáp giả lập tương tự downloader
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
