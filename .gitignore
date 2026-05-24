@@ -1,0 +1,25 @@
+# Môi trường ảo Python
+.venv/
+venv/
+ENV/
+env/
+
+# Bộ nhớ đệm biên dịch
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Cấu hình PyCharm
+.idea/
+
+# Thư mục tải video
+downloads/
+
+# Bộ chạy độc lập (Bỏ qua để sang Mac tự cấu hình)
+ffmpeg_bin/
+
+# File build
+build/
+dist/
+*.spec
