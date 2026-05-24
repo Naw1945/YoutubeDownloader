@@ -1,4 +1,3 @@
-Dưới đây là nội dung tệp `README.md` được viết lại theo phong cách chuyên nghiệp, nghiêm túc, tuân thủ đúng chuẩn tài liệu kỹ thuật dành cho dự án phần mềm.
 
 ```markdown
 # Ứng Dụng Tải Video YouTube (Desktop Application)
