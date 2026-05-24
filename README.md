@@ -108,3 +108,32 @@ youtube_downloader/
 ```
 
 ```
+Markdown
+---
+
+## Quy Trình Xử Lý Khi YouTube Cập Nhật Thuật Toán
+
+YouTube thường xuyên cập nhật cơ chế mã hóa (Signature Cipher) và hệ thống chặn bot, điều này có thể dẫn đến các lỗi đột xuất như: `This video is not available`, lỗi trích xuất dữ liệu (Extraction Error), hoặc không thể tải ảnh thu nhỏ.
+
+Khi xảy ra các hiện tượng trên, người vận hành hoặc người dùng cuối thực hiện xử lý theo các bước kiểm tra và khắc phục sau:
+
+### Bước 1: Cập nhật thư viện lõi `yt-dlp` lên phiên bản mới nhất
+Đội ngũ phát triển `yt-dlp` luôn phát hành các bản vá lỗi trong vòng vài giờ sau khi YouTube thay đổi thuật toán. Đây là giải pháp khắc phục 90% các lỗi liên quan đến việc không nhận diện được liên kết.
+
+Mở giao diện dòng lệnh tại thư mục dự án và thực thi:
+```bash
+pip install -U --no-cache-dir yt-dlp
+Bước 2: Xóa bộ nhớ đệm (Cache) của ứng dụng
+yt-dlp lưu trữ chứng thư và cấu hình phiên làm việc cũ trong bộ nhớ đệm hệ thống. Khi thuật toán YouTube thay đổi, dữ liệu cũ này có thể gây xung đột.
+
+Thực hiện lệnh sau để xóa sạch bộ nhớ đệm:
+
+Bash
+yt-dlp --rm-cache-dir
+Bước 3: Đóng gói lại tệp thực thi (Nếu ứng dụng đã được build)
+Nếu ứng dụng đã được đóng gói thành tệp .exe hoặc .app độc lập để chuyển giao cho người dùng không rành về IT, người phát triển bắt buộc phải thực hiện lại quy trình đóng gói (như hướng dẫn tại mục Đóng gói ứng dụng) sau khi đã hoàn thành Bước 1 và Bước 2 trên máy phát triển.
+
+Bước 4: Kiểm tra trạng thái IP (Trường hợp bị chặn diện rộng)
+Nếu đã cập nhật phiên bản mới nhất nhưng tất cả các video vẫn báo lỗi kết nối hoặc lỗi chặn truy cập, có khả năng địa chỉ IP mạng hiện tại đã bị đưa vào danh sách đen (Blacklist) của Google do tần suất gửi yêu cầu (Request) quá tải.
+
+Cách khắc phục: Tạm thời thay đổi địa chỉ IP bằng cách khởi động lại thiết bị Modem mạng, hoặc sử dụng các giải pháp mạng riêng ảo (VPN/Proxy) để thay đổi tuyến đường truyền dữ liệu.
