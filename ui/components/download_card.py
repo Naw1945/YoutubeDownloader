@@ -5,6 +5,8 @@ import io
 import threading
 from core.downloader import DownloaderTask
 
+_THUMBNAIL_LOCK = threading.BoundedSemaphore(3)
+
 
 class DownloadCard(ctk.CTkFrame):
     def __init__(self, master, task: DownloaderTask, **kwargs):
@@ -17,7 +19,7 @@ class DownloadCard(ctk.CTkFrame):
 
         self.grid_columnconfigure(1, weight=1)
 
-        self.thumb_label = ctk.CTkLabel(self, text="Loading...", width=120, height=68, fg_color="gray20")
+        self.thumb_label = ctk.CTkLabel(self, text="Chờ tải...", width=120, height=68, fg_color="gray20")
         self.thumb_label.grid(row=0, column=0, rowspan=3, padx=10, pady=10)
 
         self._load_thumbnail_async()
@@ -48,7 +50,7 @@ class DownloadCard(ctk.CTkFrame):
 
         self.cancel_btn = ctk.CTkButton(
             self,
-            text="Cancel",
+            text="Hủy",
             width=60,
             fg_color="#d32f2f",
             hover_color="#b71c1c",
@@ -58,56 +60,67 @@ class DownloadCard(ctk.CTkFrame):
 
     def _load_thumbnail_async(self):
         def fetch_image():
-            if not self.task.thumb_url:
-                self.after(0, lambda: self.thumb_label.configure(text="No Image"))
+            if (not self.task.thumb_url or not isinstance(self.task.thumb_url, str)) and self.task.video_id:
+                self.task.thumb_url = f"https://img.youtube.com/vi/{self.task.video_id}/hqdefault.jpg"
+
+            if not self.task.thumb_url or not self.task.thumb_url.startswith("http"):
+                self.after(0, lambda: self.thumb_label.configure(text="Không ảnh"))
                 return
 
-            try:
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-                }
+            with _THUMBNAIL_LOCK:
+                try:
+                    headers = {
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                    }
 
-                response = requests.get(
-                    self.task.thumb_url,
-                    headers=headers,
-                    timeout=5
-                )
+                    import urllib3
+                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-                image_data = Image.open(io.BytesIO(response.content))
+                    response = requests.get(
+                        self.task.thumb_url,
+                        headers=headers,
+                        timeout=5,
+                        verify=False
+                    )
 
-                img = ctk.CTkImage(
-                    light_image=image_data,
-                    dark_image=image_data,
-                    size=(120, 68)
-                )
+                    if response.status_code == 200:
+                        raw_data = io.BytesIO(response.content)
+                        image_data = Image.open(raw_data).convert("RGB")
+                        img = ctk.CTkImage(
+                            light_image=image_data,
+                            dark_image=image_data,
+                            size=(120, 68)
+                        )
+                        self.after(
+                            0,
+                            lambda: self.thumb_label.configure(image=img, text="")
+                        )
+                    else:
+                        self.after(
+                            0,
+                            lambda: self.thumb_label.configure(text="Lỗi ảnh")
+                        )
 
-                self.after(
-                    0,
-                    lambda: self.thumb_label.configure(image=img, text="")
-                )
-
-            except Exception:
-                self.after(
-                    0,
-                    lambda: self.thumb_label.configure(text="No Image")
-                )
+                except Exception:
+                    self.after(
+                        0,
+                        lambda: self.thumb_label.configure(text="Không ảnh")
+                    )
 
         threading.Thread(
             target=fetch_image,
             daemon=True
         ).start()
 
-    def update_progress(self, progress: float):
+    def update_progress(self, progress: float, speed: str = "0 KB/s", eta: str = "00:00"):
         if self.task.status == "Canceled":
             return
+        self.after(0, self._update_ui_progress, progress, speed, eta)
 
-        self.after(0, self._update_ui_progress, progress)
-
-    def _update_ui_progress(self, progress: float):
+    def _update_ui_progress(self, progress: float, speed: str, eta: str):
         self.progress_bar.set(progress)
-
         self.status_label.configure(
-            text=f"Downloading ({int(progress * 100)}%)",
+            text=f"Đang tải ({int(progress * 100)}%)  |  Tốc độ: {speed}  |  Còn lại: {eta}",
             text_color="#2196f3"
         )
 
@@ -116,16 +129,14 @@ class DownloadCard(ctk.CTkFrame):
 
     def _ui_complete(self):
         self.progress_bar.set(1.0)
-
         self.status_label.configure(
-            text="Completed",
+            text="Hoàn thành",
             text_color="#4caf50"
         )
-
         self.cancel_btn.configure(
             state="disabled",
             fg_color="gray",
-            text="Done"
+            text="Xong"
         )
 
     def on_error(self, error_msg: str):
@@ -133,38 +144,29 @@ class DownloadCard(ctk.CTkFrame):
 
     def _ui_error(self, error_msg: str):
         self.status_label.configure(
-            text="Failed (Skipped)",
+            text="Lỗi (Bỏ qua)",
             text_color="#f44336"
         )
-
         self.cancel_btn.configure(
-            text="Clear",
+            text="Xóa",
             fg_color="gray30",
             hover_color="gray40"
         )
-
-        print(f"[Download Error] Task {self.task.title} failed: {error_msg}")
+        print(f"[Lỗi tải] Video {self.task.title} thất bại: {error_msg}")
 
     def cancel_download(self):
         self.task.cancel()
-
         self.status_label.configure(
-            text="Canceled / Cleared",
+            text="Đã hủy",
             text_color="gray"
         )
-
         self.progress_bar.set(0)
-
         self.cancel_btn.configure(
             state="disabled",
             fg_color="gray"
         )
-
         self.configure(fg_color="gray10")
-
         self.title_label.configure(
             text_color="gray50"
         )
-
         self.after(500, self.pack_forget)
-

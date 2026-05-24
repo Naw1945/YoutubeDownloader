@@ -15,8 +15,8 @@ class YoutubeDownloaderApp(ctk.CTk):
         super().__init__()
 
         self.title("Trình Tải Video YouTube")
-        self.geometry("850x650")
-        self.minsize(800, 550)
+        self.geometry("850x720")
+        self.minsize(850, 600)
 
         self.queue_manager = QueueManager()
         self.queue_manager.on_task_added = self.add_card_to_ui
@@ -38,7 +38,7 @@ class YoutubeDownloaderApp(ctk.CTk):
 
         self.url_entry = ctk.CTkEntry(
             input_frame,
-            placeholder_text="Dán đường dẫn Video hoặc Playlist/Channel YouTube vào đây...",
+            placeholder_text="Dán link Video, link Kênh, link Danh sách phát YouTube vào đây",
             width=400
         )
         self.url_entry.grid(
@@ -154,7 +154,7 @@ class YoutubeDownloaderApp(ctk.CTk):
             column=0,
             columnspan=2,
             sticky="ew",
-            pady=(5, 0),
+            pady=5,
             padx=5
         )
 
@@ -210,6 +210,48 @@ class YoutubeDownloaderApp(ctk.CTk):
         )
 
         self.count_entry.configure(state="disabled")
+
+        storage_opt_frame = ctk.CTkFrame(
+            input_frame,
+            fg_color="gray13",
+            corner_radius=6
+        )
+        storage_opt_frame.grid(
+            row=3,
+            column=0,
+            columnspan=2,
+            sticky="ew",
+            pady=(5, 0),
+            padx=5
+        )
+
+        self.auto_folder_var = ctk.StringVar(value="off")
+        self.folder_checkbox = ctk.CTkCheckBox(
+            storage_opt_frame,
+            text="Phân loại theo thư mục tên Kênh",
+            variable=self.auto_folder_var,
+            onvalue="on",
+            offvalue="off",
+            font=("Arial", 11, "bold")
+        )
+        self.folder_checkbox.pack(
+            side="left",
+            padx=10,
+            pady=8
+        )
+
+        self.custom_folder_entry = ctk.CTkEntry(
+            storage_opt_frame,
+            placeholder_text="Nhập tên thư mục riêng ",
+            width=380
+        )
+        self.custom_folder_entry.pack(
+            side="right",
+            padx=10,
+            pady=5,
+            fill="x",
+            expand=True
+        )
 
         self.scroll_frame = ctk.CTkScrollableFrame(
             self,
@@ -352,6 +394,14 @@ class YoutubeDownloaderApp(ctk.CTk):
         else:
             entries = [info]
 
+        custom_folder_name = self.custom_folder_entry.get().strip()
+        is_split_by_channel = (self.auto_folder_var.get() == "on")
+
+        if custom_folder_name:
+            final_save_path = os.path.join(self.save_dir, custom_folder_name)
+        else:
+            final_save_path = self.save_dir
+
         for entry in entries:
             if not entry:
                 continue
@@ -371,7 +421,8 @@ class YoutubeDownloaderApp(ctk.CTk):
                 thumb_url=entry.get("thumbnail", ""),
                 format_type=fmt,
                 quality=qty,
-                save_path=self.save_dir
+                save_path=final_save_path,
+                split_by_channel=is_split_by_channel
             )
 
             self.after(
@@ -393,4 +444,3 @@ class YoutubeDownloaderApp(ctk.CTk):
             padx=10,
             pady=5
         )
-
